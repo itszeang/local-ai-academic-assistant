@@ -111,29 +111,29 @@
 
 ### Tests for User Story 2
 
-- [ ] T052 [P] [US2] Add contract tests for document upload, list, detail, delete, and active selection endpoints in `backend/tests/contract/test_documents_contract.py`
-- [ ] T053 [P] [US2] Add unit tests for PDF text extraction in `backend/tests/unit/test_pdf_extractor.py`
-- [ ] T054 [P] [US2] Add unit tests for OCR fallback decisions in `backend/tests/unit/test_ocr_service.py`
-- [ ] T055 [P] [US2] Add unit tests for cleaning and chunk metadata in `backend/tests/unit/test_chunker.py`
-- [ ] T056 [P] [US2] Add integration test for readable PDF ingestion in `backend/tests/integration/test_ingest_readable_pdf.py`
-- [ ] T057 [P] [US2] Add integration test for corrupted PDF structured error handling in `backend/tests/integration/test_ingest_corrupted_pdf.py`
-- [ ] T058 [P] [US2] Add integration test for active document filtering in `backend/tests/integration/test_active_documents.py`
+- [x] T052 [P] [US2] Add contract tests for document upload, list, detail, delete, and active selection endpoints in `backend/tests/contract/test_documents_contract.py`
+- [x] T053 [P] [US2] Add unit tests for PDF text extraction in `backend/tests/unit/test_pdf_extractor.py`
+- [x] T054 [P] [US2] Add unit tests for OCR fallback decisions in `backend/tests/unit/test_ocr_service.py`
+- [x] T055 [P] [US2] Add unit tests for cleaning and chunk metadata in `backend/tests/unit/test_chunker.py`
+- [x] T056 [P] [US2] Add integration test for readable PDF ingestion in `backend/tests/integration/test_ingest_readable_pdf.py`
+- [x] T057 [P] [US2] Add integration test for corrupted PDF structured error handling in `backend/tests/integration/test_ingest_corrupted_pdf.py`
+- [x] T058 [P] [US2] Add integration test for active document filtering in `backend/tests/integration/test_active_documents.py`
 
 ### Implementation for User Story 2
 
-- [ ] T059 [P] [US2] Implement PDF extraction with page metadata in `backend/app/ingestion/pdf_extractor.py`
-- [ ] T060 [P] [US2] Implement OCR fallback service in `backend/app/ingestion/ocr_service.py`
-- [ ] T061 [P] [US2] Implement text cleaning rules in `backend/app/ingestion/cleaner.py`
-- [ ] T062 [P] [US2] Implement recursive chunking with source/page metadata in `backend/app/ingestion/chunker.py`
-- [ ] T063 [P] [US2] Implement embedding service using local BGE-M3 configuration in `backend/app/ingestion/embedding_service.py`
-- [ ] T064 [US2] Implement document ingestion orchestration in `backend/app/ingestion/document_processor.py`
-- [ ] T065 [US2] Add document, segment, and job persistence methods in `backend/app/storage/repositories.py`
-- [ ] T066 [US2] Implement document upload/list/detail/delete/active routes in `backend/app/api/documents.py`
-- [ ] T067 [US2] Implement job status route in `backend/app/api/jobs.py`
-- [ ] T068 [US2] Register document and job routes in `backend/app/main.py`
-- [ ] T069 [US2] Add frontend document list and active selection UI in `frontend/src/components/DocumentList.tsx`
-- [ ] T070 [US2] Add frontend upload and processing-status flow in `frontend/src/pages/WorkspacePage.tsx`
-- [ ] T071 [US2] Wire document state updates in `frontend/src/state/workspaceStore.ts`
+- [x] T059 [P] [US2] Implement PDF extraction with page metadata in `backend/app/ingestion/pdf_extractor.py`
+- [x] T060 [P] [US2] Implement OCR fallback service in `backend/app/ingestion/ocr_service.py`
+- [x] T061 [P] [US2] Implement text cleaning rules in `backend/app/ingestion/cleaner.py`
+- [x] T062 [P] [US2] Implement recursive chunking with source/page metadata in `backend/app/ingestion/chunker.py`
+- [x] T063 [P] [US2] Implement embedding service using local BGE-M3 configuration in `backend/app/ingestion/embedding_service.py`
+- [x] T064 [US2] Implement document ingestion orchestration in `backend/app/ingestion/document_processor.py`
+- [x] T065 [US2] Add document, segment, and job persistence methods in `backend/app/storage/repositories.py`
+- [x] T066 [US2] Implement document upload/list/detail/delete/active routes in `backend/app/api/documents.py`
+- [x] T067 [US2] Implement job status route in `backend/app/api/jobs.py`
+- [x] T068 [US2] Register document and job routes in `backend/app/main.py`
+- [x] T069 [US2] Add frontend document list and active selection UI in `frontend/src/components/DocumentList.tsx`
+- [x] T070 [US2] Add frontend upload and processing-status flow in `frontend/src/pages/WorkspacePage.tsx`
+- [x] T071 [US2] Wire document state updates in `frontend/src/state/workspaceStore.ts`
 
 **Checkpoint**: Users can upload PDFs, see processing status, select active ready documents, and generation only uses those selected documents.
 

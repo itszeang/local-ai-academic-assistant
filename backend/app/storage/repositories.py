@@ -85,6 +85,29 @@ class WorkspaceRepository:
             updated_at=_parse_dt(str(row["updated_at"])),
         )
 
+    def list(self) -> list[Workspace]:
+        with self.database.connect() as connection:
+            rows = connection.execute(
+                "SELECT id, name, root_path, created_at, updated_at FROM workspaces ORDER BY created_at"
+            ).fetchall()
+
+        return [
+            Workspace(
+                id=str(row["id"]),
+                name=str(row["name"]),
+                root_path=Path(str(row["root_path"])),
+                created_at=_parse_dt(str(row["created_at"])),
+                updated_at=_parse_dt(str(row["updated_at"])),
+            )
+            for row in rows
+        ]
+
+    def get_or_create_default(self, *, root_path: Path) -> Workspace:
+        workspaces = self.list()
+        if workspaces:
+            return workspaces[0]
+        return self.create(name="Default", root_path=root_path)
+
 
 class DocumentRepository:
     def __init__(self, database: SQLiteDatabase) -> None:
@@ -152,6 +175,125 @@ class DocumentRepository:
             row = connection.execute("SELECT * FROM documents WHERE id = ?", (document_id,)).fetchone()
         if row is None:
             return None
+        return self._from_row(row)
+
+    def list_by_workspace(self, workspace_id: str) -> list[Document]:
+        with self.database.connect() as connection:
+            rows = connection.execute(
+                """
+                SELECT * FROM documents
+                WHERE workspace_id = ?
+                ORDER BY created_at DESC, filename
+                """,
+                (workspace_id,),
+            ).fetchall()
+
+        return [self._from_row(row) for row in rows]
+
+    def update(
+        self,
+        document_id: str,
+        *,
+        status: DocumentStatus | None = None,
+        fingerprint: str | None = None,
+        title: str | None = None,
+        authors: tuple[str, ...] | None = None,
+        year: int | None = None,
+        page_count: int | None = None,
+        failure_reason: str | None = None,
+    ) -> Document | None:
+        current = self.get(document_id)
+        if current is None:
+            return None
+
+        with self.database.connect() as connection:
+            connection.execute(
+                """
+                UPDATE documents
+                SET fingerprint = ?,
+                    title = ?,
+                    authors_json = ?,
+                    year = ?,
+                    page_count = ?,
+                    status = ?,
+                    failure_reason = ?,
+                    updated_at = ?
+                WHERE id = ?
+                """,
+                (
+                    current.fingerprint if fingerprint is None else fingerprint,
+                    current.title if title is None else title,
+                    json.dumps(list(current.authors if authors is None else authors)),
+                    current.year if year is None else year,
+                    current.page_count if page_count is None else page_count,
+                    (current.status if status is None else status).value,
+                    failure_reason,
+                    _serialize_dt(utc_now()),
+                    document_id,
+                ),
+            )
+        return self.get(document_id)
+
+    def delete(self, document_id: str) -> bool:
+        with self.database.connect() as connection:
+            result = connection.execute("DELETE FROM documents WHERE id = ?", (document_id,))
+            connection.execute("DELETE FROM jobs WHERE document_id = ?", (document_id,))
+        return result.rowcount > 0
+
+    def all_exist_in_workspace(self, *, workspace_id: str, document_ids: list[str]) -> bool:
+        if not document_ids:
+            return True
+        placeholders = ",".join("?" for _ in document_ids)
+        with self.database.connect() as connection:
+            rows = connection.execute(
+                f"""
+                SELECT id FROM documents
+                WHERE workspace_id = ? AND id IN ({placeholders})
+                """,
+                (workspace_id, *document_ids),
+            ).fetchall()
+        return {str(row["id"]) for row in rows} == set(document_ids)
+
+    def set_active_document_ids(self, *, workspace_id: str, document_ids: list[str]) -> list[str]:
+        self._ensure_active_table()
+        unique_document_ids = list(dict.fromkeys(document_ids))
+        now = _serialize_dt(utc_now())
+        with self.database.connect() as connection:
+            connection.execute("DELETE FROM active_documents WHERE workspace_id = ?", (workspace_id,))
+            connection.executemany(
+                """
+                INSERT INTO active_documents (workspace_id, document_id, position, created_at)
+                VALUES (?, ?, ?, ?)
+                """,
+                [
+                    (workspace_id, document_id, position, now)
+                    for position, document_id in enumerate(unique_document_ids)
+                ],
+            )
+        return self.list_active_document_ids(workspace_id)
+
+    def list_active_document_ids(self, workspace_id: str) -> list[str]:
+        self._ensure_active_table()
+        with self.database.connect() as connection:
+            rows = connection.execute(
+                """
+                SELECT active_documents.document_id
+                FROM active_documents
+                INNER JOIN documents ON documents.id = active_documents.document_id
+                WHERE active_documents.workspace_id = ?
+                ORDER BY active_documents.position
+                """,
+                (workspace_id,),
+            ).fetchall()
+        return [str(row["document_id"]) for row in rows]
+
+    def list_active_documents(self, workspace_id: str) -> list[Document]:
+        active_ids = self.list_active_document_ids(workspace_id)
+        documents = {document.id: document for document in self.list_by_workspace(workspace_id)}
+        return [documents[document_id] for document_id in active_ids if document_id in documents]
+
+    @staticmethod
+    def _from_row(row: Any) -> Document:
         return Document(
             id=str(row["id"]),
             workspace_id=str(row["workspace_id"]),
@@ -167,6 +309,22 @@ class DocumentRepository:
             created_at=_parse_dt(str(row["created_at"])),
             updated_at=_parse_dt(str(row["updated_at"])),
         )
+
+    def _ensure_active_table(self) -> None:
+        with self.database.connect() as connection:
+            connection.execute(
+                """
+                CREATE TABLE IF NOT EXISTS active_documents (
+                    workspace_id TEXT NOT NULL,
+                    document_id TEXT NOT NULL,
+                    position INTEGER NOT NULL,
+                    created_at TEXT NOT NULL,
+                    PRIMARY KEY (workspace_id, document_id),
+                    FOREIGN KEY (workspace_id) REFERENCES workspaces(id) ON DELETE CASCADE,
+                    FOREIGN KEY (document_id) REFERENCES documents(id) ON DELETE CASCADE
+                )
+                """
+            )
 
 
 class JobRepository:
@@ -222,6 +380,52 @@ class JobRepository:
             row = connection.execute("SELECT * FROM jobs WHERE id = ?", (job_id,)).fetchone()
         if row is None:
             return None
+        return self._from_row(row)
+
+    def list_by_document(self, document_id: str) -> list[Job]:
+        with self.database.connect() as connection:
+            rows = connection.execute(
+                """
+                SELECT * FROM jobs
+                WHERE document_id = ?
+                ORDER BY created_at DESC
+                """,
+                (document_id,),
+            ).fetchall()
+
+        return [self._from_row(row) for row in rows]
+
+    def update(
+        self,
+        job_id: str,
+        *,
+        status: JobStatus | None = None,
+        progress: float | None = None,
+        error: str | None = None,
+    ) -> Job | None:
+        current = self.get(job_id)
+        if current is None:
+            return None
+
+        with self.database.connect() as connection:
+            connection.execute(
+                """
+                UPDATE jobs
+                SET status = ?, progress = ?, error = ?, updated_at = ?
+                WHERE id = ?
+                """,
+                (
+                    (current.status if status is None else status).value,
+                    current.progress if progress is None else progress,
+                    error,
+                    _serialize_dt(utc_now()),
+                    job_id,
+                ),
+            )
+        return self.get(job_id)
+
+    @staticmethod
+    def _from_row(row: Any) -> Job:
         return Job(
             id=str(row["id"]),
             kind=JobKind(str(row["kind"])),

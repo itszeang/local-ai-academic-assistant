@@ -5,6 +5,54 @@ export type HealthResponse = {
 };
 
 export type GenerateMode = "qa" | "summarization" | "argument_builder" | "literature_review";
+export type DocumentStatus = "pending" | "processing" | "ready" | "failed";
+export type JobStatus = "queued" | "running" | "succeeded" | "failed";
+
+export type DocumentRecord = {
+  id: string;
+  workspace_id: string;
+  filename: string;
+  stored_path: string;
+  status: DocumentStatus;
+  fingerprint?: string | null;
+  title?: string | null;
+  authors: string[];
+  year?: number | null;
+  page_count?: number | null;
+  failure_reason?: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type JobRecord = {
+  id: string;
+  kind: "ingestion" | "generation" | "export";
+  status: JobStatus;
+  document_id?: string | null;
+  output_id?: string | null;
+  progress?: number | null;
+  error?: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type DocumentListResponse = {
+  workspace_id: string;
+  documents: DocumentRecord[];
+  active_document_ids: string[];
+};
+
+export type DocumentUploadResponse = {
+  workspace_id: string;
+  document: DocumentRecord;
+  job: JobRecord;
+};
+
+export type ActiveDocumentsResponse = {
+  workspace_id: string;
+  active_document_ids: string[];
+  documents: DocumentRecord[];
+};
 
 export type GenerateRequest = {
   mode: GenerateMode;
@@ -72,6 +120,73 @@ export class ApiClient {
       throw new Error(`Generation failed with status ${response.status}`);
     }
     return response.json() as Promise<AcademicOutputResponse>;
+  }
+
+  async listDocuments(workspaceId?: string): Promise<DocumentListResponse> {
+    const url = new URL(`${this.baseUrl}/documents`);
+    if (workspaceId) {
+      url.searchParams.set("workspace_id", workspaceId);
+    }
+    const response = await this.fetchImpl(url);
+    if (!response.ok) {
+      throw new Error(`Document list failed with status ${response.status}`);
+    }
+    return response.json() as Promise<DocumentListResponse>;
+  }
+
+  async uploadDocument(file: File, workspaceId?: string): Promise<DocumentUploadResponse> {
+    const url = new URL(`${this.baseUrl}/documents`);
+    url.searchParams.set("filename", file.name);
+    if (workspaceId) {
+      url.searchParams.set("workspace_id", workspaceId);
+    }
+    const response = await this.fetchImpl(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": file.type || "application/pdf",
+        "X-Filename": file.name
+      },
+      body: file
+    });
+    if (!response.ok) {
+      throw new Error(`Document upload failed with status ${response.status}`);
+    }
+    return response.json() as Promise<DocumentUploadResponse>;
+  }
+
+  async deleteDocument(documentId: string): Promise<{ deleted: boolean; document_id: string }> {
+    const response = await this.fetchImpl(`${this.baseUrl}/documents/${documentId}`, {
+      method: "DELETE"
+    });
+    if (!response.ok) {
+      throw new Error(`Document delete failed with status ${response.status}`);
+    }
+    return response.json() as Promise<{ deleted: boolean; document_id: string }>;
+  }
+
+  async setActiveDocuments(documentIds: string[], workspaceId?: string): Promise<ActiveDocumentsResponse> {
+    const response = await this.fetchImpl(`${this.baseUrl}/documents/active`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        workspace_id: workspaceId,
+        document_ids: documentIds
+      })
+    });
+    if (!response.ok) {
+      throw new Error(`Active document update failed with status ${response.status}`);
+    }
+    return response.json() as Promise<ActiveDocumentsResponse>;
+  }
+
+  async getJob(jobId: string): Promise<{ job: JobRecord }> {
+    const response = await this.fetchImpl(`${this.baseUrl}/jobs/${jobId}`);
+    if (!response.ok) {
+      throw new Error(`Job lookup failed with status ${response.status}`);
+    }
+    return response.json() as Promise<{ job: JobRecord }>;
   }
 }
 
