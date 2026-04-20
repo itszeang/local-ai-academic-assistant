@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "local-ai-academic-assistant-backend"
 version = "0.1.0"
 description = "Local-first academic RAG backend for uploaded PDFs, grounded generation, citations, and DOCX export."
-readme = "../README.md"
+readme = { text = "Local-first academic RAG backend for uploaded PDFs, grounded generation, citations, and DOCX export.", content-type = "text/plain" }
 requires-python = ">=3.11"
 dependencies = [
     "fastapi>=0.115",
