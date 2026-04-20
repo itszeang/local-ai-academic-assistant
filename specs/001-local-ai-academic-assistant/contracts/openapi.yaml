@@ -1,0 +1,458 @@
+openapi: 3.1.0
+info:
+  title: Local AI Academic Assistant API
+  version: 0.1.0
+  description: Local-only API contract for document ingestion, grounded academic generation, citations, and export.
+servers:
+  - url: http://127.0.0.1:8765
+    description: Local FastAPI sidecar
+paths:
+  /health:
+    get:
+      summary: Check local service readiness
+      operationId: getHealth
+      responses:
+        "200":
+          description: Service readiness state
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthResponse"
+  /documents:
+    get:
+      summary: List uploaded documents
+      operationId: listDocuments
+      responses:
+        "200":
+          description: Documents in the active workspace
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Document"
+    post:
+      summary: Upload a PDF document
+      operationId: uploadDocument
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - file
+              properties:
+                file:
+                  type: string
+                  format: binary
+      responses:
+        "202":
+          description: Document accepted for ingestion
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/IngestionJob"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+  /documents/active:
+    put:
+      summary: Set active documents for generation
+      operationId: setActiveDocuments
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ActiveDocumentsRequest"
+      responses:
+        "200":
+          description: Active document selection
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ActiveDocumentsResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+  /documents/{documentId}:
+    get:
+      summary: Get document details
+      operationId: getDocument
+      parameters:
+        - $ref: "#/components/parameters/DocumentId"
+      responses:
+        "200":
+          description: Document details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Document"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    delete:
+      summary: Remove a document from the workspace
+      operationId: deleteDocument
+      parameters:
+        - $ref: "#/components/parameters/DocumentId"
+      responses:
+        "204":
+          description: Document removed
+        "404":
+          $ref: "#/components/responses/NotFound"
+  /jobs/{jobId}:
+    get:
+      summary: Get async job status
+      operationId: getJob
+      parameters:
+        - $ref: "#/components/parameters/JobId"
+      responses:
+        "200":
+          description: Job state
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Job"
+        "404":
+          $ref: "#/components/responses/NotFound"
+  /generate:
+    post:
+      summary: Generate grounded academic output
+      operationId: generateAcademicOutput
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GenerationRequest"
+      responses:
+        "200":
+          description: Generated academic output or grounded missing-information fallback
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AcademicOutput"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+  /outputs/{outputId}:
+    get:
+      summary: Get generated output
+      operationId: getOutput
+      parameters:
+        - $ref: "#/components/parameters/OutputId"
+      responses:
+        "200":
+          description: Academic output
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AcademicOutput"
+        "404":
+          $ref: "#/components/responses/NotFound"
+  /outputs/{outputId}/citations:
+    get:
+      summary: Get citation mapping for an output
+      operationId: getOutputCitations
+      parameters:
+        - $ref: "#/components/parameters/OutputId"
+      responses:
+        "200":
+          description: Citations for the output
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Citation"
+        "404":
+          $ref: "#/components/responses/NotFound"
+  /outputs/{outputId}/export:
+    post:
+      summary: Export output as DOCX
+      operationId: exportOutput
+      parameters:
+        - $ref: "#/components/parameters/OutputId"
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ExportRequest"
+      responses:
+        "202":
+          description: Export job accepted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ExportJob"
+        "404":
+          $ref: "#/components/responses/NotFound"
+components:
+  parameters:
+    DocumentId:
+      name: documentId
+      in: path
+      required: true
+      schema:
+        type: string
+    JobId:
+      name: jobId
+      in: path
+      required: true
+      schema:
+        type: string
+    OutputId:
+      name: outputId
+      in: path
+      required: true
+      schema:
+        type: string
+  responses:
+    BadRequest:
+      description: Invalid request
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+  schemas:
+    HealthResponse:
+      type: object
+      required:
+        - status
+        - offline_ready
+      properties:
+        status:
+          type: string
+          enum: [ready, degraded]
+        offline_ready:
+          type: boolean
+        missing_local_resources:
+          type: array
+          items:
+            type: string
+    Document:
+      type: object
+      required:
+        - id
+        - filename
+        - status
+        - created_at
+      properties:
+        id:
+          type: string
+        filename:
+          type: string
+        title:
+          type: string
+          nullable: true
+        authors:
+          type: array
+          items:
+            type: string
+        year:
+          type: integer
+          nullable: true
+        page_count:
+          type: integer
+          nullable: true
+        status:
+          type: string
+          enum: [pending, processing, ready, failed]
+        failure_reason:
+          type: string
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+    IngestionJob:
+      type: object
+      required:
+        - id
+        - document_id
+        - status
+      properties:
+        id:
+          type: string
+        document_id:
+          type: string
+        status:
+          type: string
+          enum: [queued, running, succeeded, failed]
+    ActiveDocumentsRequest:
+      type: object
+      required:
+        - document_ids
+      properties:
+        document_ids:
+          type: array
+          items:
+            type: string
+    ActiveDocumentsResponse:
+      type: object
+      required:
+        - document_ids
+      properties:
+        document_ids:
+          type: array
+          items:
+            type: string
+    Job:
+      type: object
+      required:
+        - id
+        - kind
+        - status
+      properties:
+        id:
+          type: string
+        kind:
+          type: string
+          enum: [ingestion, generation, export]
+        status:
+          type: string
+          enum: [queued, running, succeeded, failed]
+        progress:
+          type: number
+          minimum: 0
+          maximum: 1
+        error:
+          type: string
+          nullable: true
+    GenerationRequest:
+      type: object
+      required:
+        - mode
+        - query
+        - active_document_ids
+      properties:
+        mode:
+          type: string
+          enum: [qa, summarization, argument_builder, literature_review]
+        query:
+          type: string
+        language:
+          type: string
+          enum: [auto, tr, en]
+          default: auto
+        active_document_ids:
+          type: array
+          minItems: 1
+          items:
+            type: string
+        top_k:
+          type: integer
+          default: 8
+          minimum: 1
+          maximum: 20
+    AcademicOutput:
+      type: object
+      required:
+        - id
+        - mode
+        - title
+        - sections
+        - references
+        - citations
+        - fallback_used
+      properties:
+        id:
+          type: string
+        mode:
+          type: string
+          enum: [qa, summarization, argument_builder, literature_review]
+        title:
+          type: string
+        sections:
+          type: array
+          items:
+            $ref: "#/components/schemas/OutputSection"
+        references:
+          type: array
+          items:
+            type: string
+        citations:
+          type: array
+          items:
+            $ref: "#/components/schemas/Citation"
+        fallback_used:
+          type: boolean
+    OutputSection:
+      type: object
+      required:
+        - heading
+        - blocks
+      properties:
+        heading:
+          type: string
+        blocks:
+          type: array
+          items:
+            type: string
+    Citation:
+      type: object
+      required:
+        - id
+        - document_id
+        - source_segment_id
+        - claim_path
+        - inline_text
+        - page_start
+      properties:
+        id:
+          type: string
+        document_id:
+          type: string
+        source_segment_id:
+          type: string
+        claim_path:
+          type: string
+        inline_text:
+          type: string
+        source_snippet:
+          type: string
+        page_start:
+          type: integer
+        page_end:
+          type: integer
+          nullable: true
+    ExportRequest:
+      type: object
+      properties:
+        filename:
+          type: string
+          nullable: true
+    ExportJob:
+      type: object
+      required:
+        - id
+        - output_id
+        - status
+      properties:
+        id:
+          type: string
+        output_id:
+          type: string
+        status:
+          type: string
+          enum: [queued, running, succeeded, failed]
+        path:
+          type: string
+          nullable: true
+    ErrorResponse:
+      type: object
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        details:
+          type: object
+          additionalProperties: true
