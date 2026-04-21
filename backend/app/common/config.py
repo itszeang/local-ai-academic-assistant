@@ -28,6 +28,7 @@ class Settings:
     generator_model: str = "llama3.1:8b"
     formatter_model: str = "llama3.1:8b"
     ollama_base_url: str = "http://127.0.0.1:11434"
+    ollama_timeout_seconds: float = 120.0
     ocr_enabled: bool = True
     chunk_size: int = 1100
     chunk_overlap: int = 200
@@ -72,6 +73,7 @@ def load_settings(env: Mapping[str, str] | None = None) -> Settings:
         generator_model=read("GENERATOR_MODEL", "llama3.1:8b"),
         formatter_model=read("FORMATTER_MODEL", "llama3.1:8b"),
         ollama_base_url=read("OLLAMA_BASE_URL", "http://127.0.0.1:11434"),
+        ollama_timeout_seconds=float(read("OLLAMA_TIMEOUT_SECONDS", "120")),
         ocr_enabled=_to_bool(read("OCR_ENABLED", "true")),
         chunk_size=int(read("CHUNK_SIZE", "1100")),
         chunk_overlap=int(read("CHUNK_OVERLAP", "200")),

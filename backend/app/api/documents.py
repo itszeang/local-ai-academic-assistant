@@ -266,7 +266,39 @@ def _get_document_processor(request: Request) -> Any | None:
         if exc.name != "app.ingestion.document_processor":
             raise
         return None
-    return getattr(module, "process_document", module)
+
+    process_document = getattr(module, "process_document", None)
+    if process_document is not None:
+        return process_document
+
+    processor_cls = getattr(module, "DocumentProcessor", None)
+    if processor_cls is None:
+        return None
+
+    def default_processor(
+        *,
+        document: Document,
+        repositories: RepositoryRegistry,
+        settings: Any,
+    ) -> dict[str, Any]:
+        processor = processor_cls(
+            segment_repository=repositories.source_segments,
+            chunk_size=settings.chunk_size,
+            chunk_overlap=settings.chunk_overlap,
+        )
+        result = processor.process(
+            document_id=document.id,
+            pdf_path=document.stored_path,
+            source_label=document.filename,
+        )
+        return {
+            "title": document.title,
+            "authors": list(document.authors),
+            "year": document.year,
+            "page_count": result.page_count,
+        }
+
+    return default_processor
 
 
 async def _process_uploaded_document(

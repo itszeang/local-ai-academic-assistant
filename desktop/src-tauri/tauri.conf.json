@@ -6,8 +6,8 @@
   "build": {
     "frontendDist": "../../frontend/dist",
     "devUrl": "http://127.0.0.1:5173",
-    "beforeDevCommand": "npm --prefix ../frontend run dev",
-    "beforeBuildCommand": "npm --prefix ../frontend run build"
+    "beforeDevCommand": "powershell -ExecutionPolicy Bypass -File ../desktop/scripts/dev-before-dev.ps1",
+    "beforeBuildCommand": "npm.cmd --prefix ../frontend run build"
   },
   "app": {
     "windows": [
@@ -26,6 +26,9 @@
   "bundle": {
     "active": true,
     "targets": "all",
-    "externalBin": []
+    "externalBin": [],
+    "resources": {
+      "sidecars/README.md": "sidecars/README.md"
+    }
   }
 }

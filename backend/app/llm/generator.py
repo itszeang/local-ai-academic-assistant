@@ -69,14 +69,18 @@ class GroundedGenerator:
             )
 
         primary_citation = self.formatter.citation_for_result(retrieval_results[0])
-        sections = self.formatter.qa_sections(
+        sections = self.formatter.sections_for_mode(
+            mode=mode,
             answer_text=answer_text,
-            citation_text=primary_citation.inline_text,
+            retrieval_results=retrieval_results,
         )
         return GeneratedAnswer(
-            title="Grounded Answer",
+            title=self._title_for_mode(mode),
             sections=sections,
-            references=self.formatter.references(retrieval_results),
+            references=self.formatter.references_for_mode(
+                mode=mode,
+                retrieval_results=retrieval_results,
+            ),
             citations=[primary_citation],
             fallback_used=False,
         )
@@ -90,5 +94,16 @@ class GroundedGenerator:
             if generated.strip():
                 return generated.strip()
 
-        # Conservative offline fallback for tests and first-run local setup: summarize only retrieved text.
+        # Conservative offline fallback for tests and first-run local setup.
+        # The formatter keeps Q&A concise; long synthesis is reserved for summary/review modes.
         return retrieval_results[0].source_segment.text.strip()
+
+    @staticmethod
+    def _title_for_mode(mode: GenerationMode) -> str:
+        titles = {
+            GenerationMode.QA: "Grounded Answer",
+            GenerationMode.SUMMARIZATION: "Structured Summary",
+            GenerationMode.ARGUMENT_BUILDER: "Argument Builder",
+            GenerationMode.LITERATURE_REVIEW: "Literature Review",
+        }
+        return titles[mode]

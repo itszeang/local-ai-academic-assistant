@@ -46,18 +46,58 @@ uvicorn app.main:app --reload --host 127.0.0.1 --port 8765
 
 ```powershell
 cd frontend
-npm install
-npm run dev
-npm test
+npm.cmd install
+npm.cmd run dev
+npm.cmd test
 ```
 
 ## Desktop Development
 
 ```powershell
 cd desktop
-npm install
-npm run dev
+npm.cmd install
+npm.cmd run tauri dev
 ```
+
+During development, run the backend API separately before launching Tauri:
+
+```powershell
+cd backend
+.\.venv\Scripts\Activate.ps1
+uvicorn app.main:app --reload --host 127.0.0.1 --port 8765
+```
+
+The desktop shell includes a `backend_ready` command for checking the local API port. Packaged builds should add a platform-specific backend launcher under `desktop/src-tauri/sidecars/`.
+
+## Validation Commands
+
+```powershell
+cd backend
+pytest
+
+cd ..\frontend
+npm.cmd run typecheck
+npm.cmd test
+npm.cmd run build
+```
+
+On a fresh Windows PC, Rust, Visual Studio Build Tools with MSVC/Windows SDK, Tesseract, and Ollama must be installed separately for full desktop/OCR/local LLM validation.
+
+## Current Windows Setup Status
+
+Validated in this workspace:
+
+- Backend test suite: passing
+- Frontend typecheck, smoke test, and production build: passing
+- Tauri CLI: installed and runnable
+- Tauri dev pre-command: configured to start the FastAPI backend when port `8765` is closed
+
+Still required on this PC for full desktop build/run validation:
+
+- Rust via rustup, so `rustc` and `cargo` are on PATH
+- Visual Studio Build Tools with MSVC and Windows SDK components
+- Tesseract OCR for scanned PDF fallback
+- Ollama and the configured local model for real local generation
 
 ## Core Rules
 

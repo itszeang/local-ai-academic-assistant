@@ -3,6 +3,12 @@ __pycache__/
 *.py[cod]
 *.egg-info/
 .pytest_cache/
+.codex-pytest-cache/
+codex-pytest-cache/
+.codex-temp/
+codex-test-temp/
+pytest-cache-files-*/
+backend/pytest-cache-files-*/
 .mypy_cache/
 .ruff_cache/
 .coverage

@@ -147,22 +147,22 @@
 
 ### Tests for User Story 3
 
-- [ ] T072 [P] [US3] Add unit tests for mode-specific output schemas in `backend/tests/unit/test_output_modes.py`
-- [ ] T073 [P] [US3] Add unit tests for summarization prompt requirements in `backend/tests/unit/test_summarization_prompt.py`
-- [ ] T074 [P] [US3] Add unit tests for argument builder prompt requirements in `backend/tests/unit/test_argument_prompt.py`
-- [ ] T075 [P] [US3] Add unit tests for literature review prompt requirements in `backend/tests/unit/test_literature_review_prompt.py`
-- [ ] T076 [P] [US3] Add integration test for all mode outputs using fixture documents in `backend/tests/integration/test_mode_outputs.py`
+- [x] T072 [P] [US3] Add unit tests for mode-specific output schemas in `backend/tests/unit/test_output_modes.py`
+- [x] T073 [P] [US3] Add unit tests for summarization prompt requirements in `backend/tests/unit/test_summarization_prompt.py`
+- [x] T074 [P] [US3] Add unit tests for argument builder prompt requirements in `backend/tests/unit/test_argument_prompt.py`
+- [x] T075 [P] [US3] Add unit tests for literature review prompt requirements in `backend/tests/unit/test_literature_review_prompt.py`
+- [x] T076 [P] [US3] Add integration test for all mode outputs using fixture documents in `backend/tests/integration/test_mode_outputs.py`
 
 ### Implementation for User Story 3
 
-- [ ] T077 [P] [US3] Add mode selector component in `frontend/src/components/ModeSelector.tsx`
-- [ ] T078 [US3] Extend prompt manager with Q&A, Summarization, Argument Builder, and Literature Review templates in `backend/app/llm/prompt_manager.py`
-- [ ] T079 [US3] Extend generator with partial-section fallback behavior in `backend/app/llm/generator.py`
-- [ ] T080 [US3] Extend formatter with mode-specific section layouts in `backend/app/llm/formatter.py`
-- [ ] T081 [US3] Extend generation endpoint validation for all modes in `backend/app/api/generation.py`
-- [ ] T082 [US3] Wire mode selection into frontend workspace state in `frontend/src/state/workspaceStore.ts`
-- [ ] T083 [US3] Render mode-specific output sections in `frontend/src/components/WorkspaceOutput.tsx`
-- [ ] T084 [US3] Integrate mode selector into workspace layout in `frontend/src/pages/WorkspacePage.tsx`
+- [x] T077 [P] [US3] Add mode selector component in `frontend/src/components/ModeSelector.tsx`
+- [x] T078 [US3] Extend prompt manager with Q&A, Summarization, Argument Builder, and Literature Review templates in `backend/app/llm/prompt_manager.py`
+- [x] T079 [US3] Extend generator with partial-section fallback behavior in `backend/app/llm/generator.py`
+- [x] T080 [US3] Extend formatter with mode-specific section layouts in `backend/app/llm/formatter.py`
+- [x] T081 [US3] Extend generation endpoint validation for all modes in `backend/app/api/generation.py`
+- [x] T082 [US3] Wire mode selection into frontend workspace state in `frontend/src/state/workspaceStore.ts`
+- [x] T083 [US3] Render mode-specific output sections in `frontend/src/components/WorkspaceOutput.tsx`
+- [x] T084 [US3] Integrate mode selector into workspace layout in `frontend/src/pages/WorkspacePage.tsx`
 
 **Checkpoint**: All four modes produce visibly distinct academic documents while preserving the same grounding and citation rules.
 
@@ -176,21 +176,21 @@
 
 ### Tests for User Story 4
 
-- [ ] T085 [P] [US4] Add contract test for `POST /outputs/{outputId}/export` in `backend/tests/contract/test_exports_contract.py`
-- [ ] T086 [P] [US4] Add unit tests for DOCX section and reference rendering in `backend/tests/unit/test_docx_exporter.py`
-- [ ] T087 [P] [US4] Add integration test for supported output export in `backend/tests/integration/test_export_supported_output.py`
-- [ ] T088 [P] [US4] Add integration test for fallback output export in `backend/tests/integration/test_export_fallback_output.py`
+- [x] T085 [P] [US4] Add contract test for `POST /outputs/{outputId}/export` in `backend/tests/contract/test_exports_contract.py`
+- [x] T086 [P] [US4] Add unit tests for DOCX section and reference rendering in `backend/tests/unit/test_docx_exporter.py`
+- [x] T087 [P] [US4] Add integration test for supported output export in `backend/tests/integration/test_export_supported_output.py`
+- [x] T088 [P] [US4] Add integration test for fallback output export in `backend/tests/integration/test_export_fallback_output.py`
 
 ### Implementation for User Story 4
 
-- [ ] T089 [US4] Implement DOCX exporter for structured academic output in `backend/app/export/docx_exporter.py`
-- [ ] T090 [US4] Add export file persistence methods in `backend/app/storage/repositories.py`
-- [ ] T091 [US4] Implement output retrieval and citation routes in `backend/app/api/generation.py`
-- [ ] T092 [US4] Implement export route in `backend/app/api/exports.py`
-- [ ] T093 [US4] Register export routes in `backend/app/main.py`
-- [ ] T094 [US4] Add export action to frontend API client in `frontend/src/services/api.ts`
-- [ ] T095 [US4] Add export button and export status UI in `frontend/src/components/WorkspaceOutput.tsx`
-- [ ] T096 [US4] Wire export flow into workspace page in `frontend/src/pages/WorkspacePage.tsx`
+- [x] T089 [US4] Implement DOCX exporter for structured academic output in `backend/app/export/docx_exporter.py`
+- [x] T090 [US4] Add export file persistence methods in `backend/app/storage/repositories.py`
+- [x] T091 [US4] Implement output retrieval and citation routes in `backend/app/api/generation.py`
+- [x] T092 [US4] Implement export route in `backend/app/api/exports.py`
+- [x] T093 [US4] Register export routes in `backend/app/main.py`
+- [x] T094 [US4] Add export action to frontend API client in `frontend/src/services/api.ts`
+- [x] T095 [US4] Add export button and export status UI in `frontend/src/components/WorkspaceOutput.tsx`
+- [x] T096 [US4] Wire export flow into workspace page in `frontend/src/pages/WorkspacePage.tsx`
 
 **Checkpoint**: Users can export generated outputs to `.docx`; exported files preserve academic structure and references.
 
@@ -200,16 +200,16 @@
 
 **Purpose**: Package the local desktop experience, verify offline behavior, improve UX, and harden the project.
 
-- [ ] T097 [P] Add academic workspace layout shell with sidebar, main output area, and citation panel in `frontend/src/layouts/AcademicWorkspaceLayout.tsx`
-- [ ] T098 [P] Add polished responsive workspace styling in `frontend/src/styles/academic-workspace.css`
-- [ ] T099 Integrate workspace layout into `frontend/src/pages/WorkspacePage.tsx`
-- [ ] T100 Configure Tauri sidecar launch behavior for the local FastAPI backend in `desktop/src-tauri/tauri.conf.json`
-- [ ] T101 Add Tauri command or startup check for backend readiness in `desktop/src-tauri/src/main.rs`
-- [ ] T102 [P] Add frontend smoke test for document/mode/output layout in `frontend/tests/workspace.spec.ts`
-- [ ] T103 [P] Add offline validation notes and troubleshooting to `quickstart.md`
-- [ ] T104 Run backend test suite and record any required fixes in `backend/tests/`
-- [ ] T105 Run frontend test suite and record any required fixes in `frontend/tests/`
-- [ ] T106 Validate the full quickstart flow and update `README.md`
+- [x] T097 [P] Add academic workspace layout shell with sidebar, main output area, and citation panel in `frontend/src/layouts/AcademicWorkspaceLayout.tsx`
+- [x] T098 [P] Add polished responsive workspace styling in `frontend/src/styles/academic-workspace.css`
+- [x] T099 Integrate workspace layout into `frontend/src/pages/WorkspacePage.tsx`
+- [x] T100 Configure Tauri sidecar launch behavior for the local FastAPI backend in `desktop/src-tauri/tauri.conf.json`
+- [x] T101 Add Tauri command or startup check for backend readiness in `desktop/src-tauri/src/main.rs`
+- [x] T102 [P] Add frontend smoke test for document/mode/output layout in `frontend/tests/workspace.spec.tsx`
+- [x] T103 [P] Add offline validation notes and troubleshooting to `quickstart.md`
+- [x] T104 Run backend test suite and record any required fixes in `backend/tests/`
+- [x] T105 Run frontend test suite and record any required fixes in `frontend/tests/`
+- [x] T106 Validate the full quickstart flow and update `README.md`
 
 ---
 

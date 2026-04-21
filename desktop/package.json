@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "tauri dev",
+    "dev:frontend-backend": "powershell -ExecutionPolicy Bypass -File scripts/dev-before-dev.ps1",
     "build": "tauri build",
     "tauri": "tauri"
   },

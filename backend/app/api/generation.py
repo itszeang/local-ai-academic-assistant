@@ -49,7 +49,7 @@ async def generate_academic_output(
     generator = GroundedGenerator(
         llm_client=OllamaClient(
             base_url=request.app.state.settings.ollama_base_url,
-            timeout_seconds=2.0,
+            timeout_seconds=request.app.state.settings.ollama_timeout_seconds,
         ),
         generator_model=request.app.state.settings.generator_model,
     )
@@ -116,6 +116,39 @@ async def generate_academic_output(
     }
 
 
+@router.get("/outputs/{output_id}")
+async def get_academic_output(output_id: str, request: Request) -> dict[str, Any]:
+    repositories = RepositoryRegistry(request.app.state.database)
+    output = repositories.academic_outputs.get(output_id)
+    if output is None:
+        raise AppError(
+            code=ErrorCode.NOT_FOUND,
+            message="Academic output was not found.",
+            status_code=404,
+            details={"output_id": output_id},
+        )
+
+    citations = repositories.citations.list_by_output(output.id)
+    return _output_payload(output, citations, repositories)
+
+
+@router.get("/outputs/{output_id}/citations")
+async def get_output_citations(output_id: str, request: Request) -> list[dict[str, Any]]:
+    repositories = RepositoryRegistry(request.app.state.database)
+    output = repositories.academic_outputs.get(output_id)
+    if output is None:
+        raise AppError(
+            code=ErrorCode.NOT_FOUND,
+            message="Academic output was not found.",
+            status_code=404,
+            details={"output_id": output_id},
+        )
+    return [
+        _citation_payload(citation, repositories)
+        for citation in repositories.citations.list_by_output(output.id)
+    ]
+
+
 def _section_payload(answer: GeneratedAnswer) -> list[dict[str, Any]]:
     if answer.fallback_used:
         return [{"heading": "Answer", "blocks": [MISSING_INFORMATION_RESPONSE]}]
@@ -133,3 +166,29 @@ def _document_id_for_citation(retrieval_results: list[Any], source_segment_id: s
         if result.source_segment.id == source_segment_id:
             return str(result.source_segment.document_id)
     return ""
+
+
+def _output_payload(output: Any, citations: list[Any], repositories: RepositoryRegistry) -> dict[str, Any]:
+    return {
+        "id": output.id,
+        "mode": output.mode.value,
+        "title": output.title,
+        "sections": output.sections,
+        "references": output.references,
+        "citations": [_citation_payload(citation, repositories) for citation in citations],
+        "fallback_used": output.fallback_used,
+    }
+
+
+def _citation_payload(citation: Any, repositories: RepositoryRegistry) -> dict[str, Any]:
+    source_segment = repositories.source_segments.get(citation.source_segment_id)
+    return {
+        "id": citation.id,
+        "document_id": source_segment.document_id if source_segment else "",
+        "source_segment_id": citation.source_segment_id,
+        "claim_path": citation.claim_path,
+        "inline_text": citation.inline_text,
+        "source_snippet": citation.source_snippet,
+        "page_start": citation.page_start,
+        "page_end": citation.page_end,
+    }

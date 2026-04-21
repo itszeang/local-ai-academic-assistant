@@ -690,6 +690,31 @@ class CitationRepository:
             page_end=page_end,
         )
 
+    def list_by_output(self, academic_output_id: str) -> list[Citation]:
+        with self.database.connect() as connection:
+            rows = connection.execute(
+                """
+                SELECT * FROM citations
+                WHERE academic_output_id = ?
+                ORDER BY id
+                """,
+                (academic_output_id,),
+            ).fetchall()
+
+        return [
+            Citation(
+                id=str(row["id"]),
+                academic_output_id=str(row["academic_output_id"]),
+                source_segment_id=str(row["source_segment_id"]),
+                claim_path=str(row["claim_path"]),
+                inline_text=str(row["inline_text"]),
+                source_snippet=str(row["source_snippet"]),
+                page_start=int(row["page_start"]),
+                page_end=None if row["page_end"] is None else int(row["page_end"]),
+            )
+            for row in rows
+        ]
+
 
 class ExportFileRepository:
     def __init__(self, database: SQLiteDatabase) -> None:
@@ -732,6 +757,40 @@ class ExportFileRepository:
                 ),
             )
         return export_file
+
+    def get(self, export_file_id: str) -> ExportFile | None:
+        with self.database.connect() as connection:
+            row = connection.execute(
+                "SELECT * FROM export_files WHERE id = ?",
+                (export_file_id,),
+            ).fetchone()
+        if row is None:
+            return None
+        return self._from_row(row)
+
+    def list_by_output(self, academic_output_id: str) -> list[ExportFile]:
+        with self.database.connect() as connection:
+            rows = connection.execute(
+                """
+                SELECT * FROM export_files
+                WHERE academic_output_id = ?
+                ORDER BY created_at DESC
+                """,
+                (academic_output_id,),
+            ).fetchall()
+        return [self._from_row(row) for row in rows]
+
+    @staticmethod
+    def _from_row(row: Any) -> ExportFile:
+        return ExportFile(
+            id=str(row["id"]),
+            academic_output_id=str(row["academic_output_id"]),
+            format=str(row["format"]),
+            path=Path(str(row["path"])),
+            status=JobStatus(str(row["status"])),
+            error_message=None if row["error_message"] is None else str(row["error_message"]),
+            created_at=_parse_dt(str(row["created_at"])),
+        )
 
 
 class RepositoryRegistry:

@@ -86,6 +86,14 @@ export type AcademicOutputResponse = {
   fallback_used: boolean;
 };
 
+export type ExportJobResponse = {
+  id: string;
+  export_file_id: string;
+  output_id: string;
+  status: "queued" | "running" | "succeeded" | "failed";
+  path?: string | null;
+};
+
 export type ApiClientOptions = {
   baseUrl?: string;
   fetchImpl?: typeof fetch;
@@ -97,7 +105,7 @@ export class ApiClient {
 
   constructor(options: ApiClientOptions = {}) {
     this.baseUrl = options.baseUrl ?? "http://127.0.0.1:8765";
-    this.fetchImpl = options.fetchImpl ?? fetch;
+    this.fetchImpl = options.fetchImpl ?? window.fetch.bind(window);
   }
 
   async health(): Promise<HealthResponse> {
@@ -117,9 +125,39 @@ export class ApiClient {
       body: JSON.stringify(request)
     });
     if (!response.ok) {
-      throw new Error(`Generation failed with status ${response.status}`);
+      throw new Error(await this.errorMessage(response, "Generation failed"));
     }
     return response.json() as Promise<AcademicOutputResponse>;
+  }
+
+  async getOutput(outputId: string): Promise<AcademicOutputResponse> {
+    const response = await this.fetchImpl(`${this.baseUrl}/outputs/${outputId}`);
+    if (!response.ok) {
+      throw new Error(await this.errorMessage(response, "Output lookup failed"));
+    }
+    return response.json() as Promise<AcademicOutputResponse>;
+  }
+
+  async getOutputCitations(outputId: string): Promise<Citation[]> {
+    const response = await this.fetchImpl(`${this.baseUrl}/outputs/${outputId}/citations`);
+    if (!response.ok) {
+      throw new Error(await this.errorMessage(response, "Citation lookup failed"));
+    }
+    return response.json() as Promise<Citation[]>;
+  }
+
+  async exportOutput(outputId: string, filename?: string): Promise<ExportJobResponse> {
+    const response = await this.fetchImpl(`${this.baseUrl}/outputs/${outputId}/export`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ filename })
+    });
+    if (!response.ok) {
+      throw new Error(await this.errorMessage(response, "Export failed"));
+    }
+    return response.json() as Promise<ExportJobResponse>;
   }
 
   async listDocuments(workspaceId?: string): Promise<DocumentListResponse> {
@@ -129,7 +167,7 @@ export class ApiClient {
     }
     const response = await this.fetchImpl(url);
     if (!response.ok) {
-      throw new Error(`Document list failed with status ${response.status}`);
+      throw new Error(await this.errorMessage(response, "Document list failed"));
     }
     return response.json() as Promise<DocumentListResponse>;
   }
@@ -143,13 +181,12 @@ export class ApiClient {
     const response = await this.fetchImpl(url, {
       method: "POST",
       headers: {
-        "Content-Type": file.type || "application/pdf",
-        "X-Filename": file.name
+        "Content-Type": file.type || "application/pdf"
       },
       body: file
     });
     if (!response.ok) {
-      throw new Error(`Document upload failed with status ${response.status}`);
+      throw new Error(await this.errorMessage(response, "Document upload failed"));
     }
     return response.json() as Promise<DocumentUploadResponse>;
   }
@@ -159,7 +196,7 @@ export class ApiClient {
       method: "DELETE"
     });
     if (!response.ok) {
-      throw new Error(`Document delete failed with status ${response.status}`);
+      throw new Error(await this.errorMessage(response, "Document delete failed"));
     }
     return response.json() as Promise<{ deleted: boolean; document_id: string }>;
   }
@@ -176,7 +213,7 @@ export class ApiClient {
       })
     });
     if (!response.ok) {
-      throw new Error(`Active document update failed with status ${response.status}`);
+      throw new Error(await this.errorMessage(response, "Active document update failed"));
     }
     return response.json() as Promise<ActiveDocumentsResponse>;
   }
@@ -184,9 +221,18 @@ export class ApiClient {
   async getJob(jobId: string): Promise<{ job: JobRecord }> {
     const response = await this.fetchImpl(`${this.baseUrl}/jobs/${jobId}`);
     if (!response.ok) {
-      throw new Error(`Job lookup failed with status ${response.status}`);
+      throw new Error(await this.errorMessage(response, "Job lookup failed"));
     }
     return response.json() as Promise<{ job: JobRecord }>;
+  }
+
+  private async errorMessage(response: Response, fallback: string): Promise<string> {
+    try {
+      const payload = (await response.json()) as { message?: string; detail?: string };
+      return payload.message ?? payload.detail ?? `${fallback} with status ${response.status}`;
+    } catch {
+      return `${fallback} with status ${response.status}`;
+    }
   }
 }
 

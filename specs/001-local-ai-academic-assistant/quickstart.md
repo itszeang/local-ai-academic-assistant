@@ -1,15 +1,18 @@
 # Quickstart: Local-First AI Academic Assistant
 
-This quickstart describes the expected developer workflow for the first implementation phase.
+This quickstart describes the expected developer workflow for the current local desktop implementation.
 
 ## Prerequisites
 
 - Python 3.11+
 - Node.js 20+
 - Rust toolchain for Tauri
+- Visual Studio Build Tools with MSVC and Windows SDK components for Tauri on Windows
 - Tesseract OCR installed locally and available on PATH
 - Ollama installed locally
 - Local Ollama models pulled before offline use
+
+On Windows PowerShell, if script execution blocks `npm`, use `npm.cmd` in the commands below.
 
 Example local model setup:
 
@@ -26,6 +29,13 @@ python -m venv .venv
 pip install -e ".[dev]"
 ```
 
+If the full editable install is slow on a new PC, install the minimum test/runtime packages first and then retry:
+
+```powershell
+pip install pytest pytest-asyncio fastapi httpx pydantic pydantic-settings python-docx
+pip install -e ".[dev]"
+```
+
 Run the local API:
 
 ```powershell
@@ -36,19 +46,19 @@ uvicorn app.main:app --reload --host 127.0.0.1 --port 8765
 
 ```powershell
 cd frontend
-npm install
-npm run dev
+npm.cmd install
+npm.cmd run dev
 ```
 
 ## Desktop Shell
 
 ```powershell
 cd desktop
-npm install
-npm run tauri dev
+npm.cmd install
+npm.cmd run tauri dev
 ```
 
-The desktop shell starts the React workspace and connects to the local FastAPI sidecar.
+During development, start the backend service separately before launching the desktop shell. The Tauri shell exposes a backend readiness command for checking whether the local API is reachable at `127.0.0.1:8765`. Packaged builds should add a platform-specific backend launcher under `desktop/src-tauri/sidecars/` and register it in `tauri.conf.json`.
 
 ## Manual Acceptance Flow
 
@@ -79,7 +89,7 @@ Frontend:
 
 ```powershell
 cd frontend
-npm test
+npm.cmd test
 ```
 
 Contract checks:
@@ -106,3 +116,12 @@ After dependencies and local models are installed:
 2. Start Ollama, backend, and desktop UI.
 3. Run upload, query, citation review, and export flows.
 4. Confirm no core feature requires a network request.
+
+## Troubleshooting
+
+- If `npm` is blocked by PowerShell execution policy, run `npm.cmd` instead.
+- If pytest cannot create temp folders under `AppData\\Local\\Temp`, set `$env:TEMP` and `$env:TMP` to a writable project-local temp directory before running tests.
+- If Tauri commands fail because Rust is missing, install the Rust toolchain and reopen the terminal so `cargo` and `rustc` are on PATH.
+- If `tauri info` reports missing MSVC/SDK components, install Visual Studio Build Tools with the Desktop development with C++ workload.
+- If OCR fallback is unavailable, install Tesseract and make sure `tesseract --version` works from the same terminal.
+- If local generation fails, start Ollama and pull the configured model, for example `ollama pull llama3.1:8b`.
