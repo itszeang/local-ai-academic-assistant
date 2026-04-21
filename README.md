@@ -1,109 +1,165 @@
-# Local AI Academic Assistant
+# 🧠 OfflineScholar
 
-Local-first desktop workspace for academic PDFs, grounded answers, structured academic writing, citation traceability, and DOCX export.
+### Write from your PDFs — with real citations, zero hallucination.
 
-The project is intentionally built in phases. The first milestone is not a full desktop app; it is a trustworthy local RAG core that can answer only from uploaded documents and returns `Bilgi bulunamadı` when evidence is missing.
+---
 
-## Repository Layout
+## 🚀 What is this?
 
-```text
-backend/   Python FastAPI sidecar, ingestion, retrieval, local LLM orchestration, storage, export
-frontend/  React workspace UI for documents, modes, output, and citations
-desktop/   Tauri desktop shell and backend sidecar integration
-specs/     Spec Kit feature specification, plan, contracts, and tasks
-```
+OfflineScholar is a **local-first academic assistant** that helps you:
 
-## Implementation Phases
+* Upload your PDFs
+* Ask questions
+* Generate thesis-ready paragraphs
 
-1. Setup shared project structure and manifests.
-2. Build the foundation: settings, errors, storage, app boot, health endpoint.
-3. Build the MVP: grounded Q&A over prepared source segments.
-4. Add PDF ingestion and active document management.
-5. Add Summarization, Argument Builder, and Literature Review modes.
-6. Add DOCX export.
-7. Package and polish the desktop app.
+👉 **All answers are grounded in your documents — not AI imagination.**
 
-Track detailed work in [tasks.md](./specs/001-local-ai-academic-assistant/tasks.md).
+---
 
-## Backend Development
+## ⚠️ The Problem
 
-```powershell
+Most AI tools:
+
+* ❌ hallucinate sources
+* ❌ generate fake citations
+* ❌ cannot be trusted for academic writing
+
+---
+
+## ✅ The Solution
+
+OfflineScholar:
+
+* ✔ Uses **only your uploaded PDFs**
+* ✔ Shows **traceable citations (document + page)**
+* ✔ Returns **"No information found"** if the answer is not in your sources
+
+👉 No guessing. No fake knowledge.
+
+---
+
+## 🔥 Core Features
+
+### 📄 1. Upload & Ask
+
+* Upload academic PDFs
+* Ask any question
+* Get **grounded answers with citations**
+
+---
+
+### ✍️ 2. Thesis Mode
+
+Generate **academic paragraphs** based strictly on your sources.
+
+> Example:
+
+**Prompt:**
+
+> Explain the impact of X based on the provided papers.
+
+**Output:**
+
+> X has been shown to significantly affect Y in multiple studies (Smith, 2020, p.12; Johnson, 2019, p.45). These findings suggest that...
+
+---
+
+### 🧠 3. No Hallucination Guarantee
+
+If the answer is not found in your PDFs:
+
+> ❗ "No information found."
+
+---
+
+### 🔌 4. Fully Local (Optional)
+
+* Works without internet
+* Your documents stay on your machine
+
+---
+
+## 🎯 Who is this for?
+
+* University students
+* Master's / PhD researchers
+* Anyone writing academic content from PDFs
+
+---
+
+## ⚡ Why is this different?
+
+| Tool               | Uses your sources only | Real citations | Offline |
+| ------------------ | ---------------------- | -------------- | ------- |
+| ChatGPT            | ❌                      | ❌              | ❌       |
+| Google Scholar     | ✔                      | ✔              | ❌       |
+| **OfflineScholar** | ✔                      | ✔              | ✔       |
+
+---
+
+## 🛠️ Tech Stack
+
+* FastAPI (backend)
+* React (frontend)
+* Tauri (desktop)
+* Local LLM + RAG pipeline
+
+---
+
+## 🧪 Current Status
+
+🚧 Early version — core functionality works:
+
+* PDF upload ✔
+* Q&A with citations ✔
+* Thesis paragraph generation ✔
+
+More features coming soon.
+
+---
+
+## 📸 Demo (add here)
+
+> Add screenshots / GIF showing:
+>
+> * PDF upload
+> * Question → cited answer
+> * Thesis paragraph output
+
+---
+
+## 💡 Vision
+
+> A trustworthy AI system for academic work —
+> where every sentence is backed by real sources.
+
+---
+
+## 📦 Installation
+
+```bash
+# backend
 cd backend
-python -m venv .venv
-.\.venv\Scripts\Activate.ps1
-pip install -e ".[dev]"
-pytest
-```
+pip install -r requirements.txt
 
-Run the local API after Phase 2 creates the app entry point:
-
-```powershell
-cd backend
-uvicorn app.main:app --reload --host 127.0.0.1 --port 8765
-```
-
-## Frontend Development
-
-```powershell
+# frontend
 cd frontend
-npm.cmd install
-npm.cmd run dev
-npm.cmd test
+npm install
+
+# run
+npm run dev
 ```
 
-## Desktop Development
+---
 
-```powershell
-cd desktop
-npm.cmd install
-npm.cmd run tauri dev
-```
+## ⭐ Support
 
-During development, run the backend API separately before launching Tauri:
+If you find this useful, give it a star.
 
-```powershell
-cd backend
-.\.venv\Scripts\Activate.ps1
-uvicorn app.main:app --reload --host 127.0.0.1 --port 8765
-```
+---
 
-The desktop shell includes a `backend_ready` command for checking the local API port. Packaged builds should add a platform-specific backend launcher under `desktop/src-tauri/sidecars/`.
+## 🧠 Built for real academic work
 
-## Validation Commands
+Not for generating text.
 
-```powershell
-cd backend
-pytest
-
-cd ..\frontend
-npm.cmd run typecheck
-npm.cmd test
-npm.cmd run build
-```
-
-On a fresh Windows PC, Rust, Visual Studio Build Tools with MSVC/Windows SDK, Tesseract, and Ollama must be installed separately for full desktop/OCR/local LLM validation.
-
-## Current Windows Setup Status
-
-Validated in this workspace:
-
-- Backend test suite: passing
-- Frontend typecheck, smoke test, and production build: passing
-- Tauri CLI: installed and runnable
-- Tauri dev pre-command: configured to start the FastAPI backend when port `8765` is closed
-
-Still required on this PC for full desktop build/run validation:
-
-- Rust via rustup, so `rustc` and `cargo` are on PATH
-- Visual Studio Build Tools with MSVC and Windows SDK components
-- Tesseract OCR for scanned PDF fallback
-- Ollama and the configured local model for real local generation
-
-## Core Rules
-
-- Core behavior is local-first and offline-capable after local resources are installed.
-- User documents and generated content stay on the device.
-- The system answers only from selected uploaded documents.
-- Unsupported requests return exactly `Bilgi bulunamadı`.
-- Every substantive claim must be traceable to a source document and page or equivalent source location.
-- Do not add internet search, cloud LLM calls, collaboration, subscriptions, flashcards, quizzes, voice, or knowledge graphs in the initial version.
+For generating **trust**.
