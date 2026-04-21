@@ -1,155 +1,158 @@
-# 🧠 OfflineScholar
+# OfflineScholar
 
-### Write from your PDFs — with real citations, zero hallucination.
+Local-first academic assistant for working with your own PDFs.
 
----
-
-## 🚀 What is this?
-
-OfflineScholar is a **local-first academic assistant** that helps you:
-
-* Upload your PDFs
-* Ask questions
-* Generate thesis-ready paragraphs
-
-👉 **All answers are grounded in your documents — not AI imagination.**
+OfflineScholar lets you upload academic PDFs, search only within your selected documents, generate grounded answers with citations, build literature-review style outputs, and export results to DOCX — all with local models.
 
 ---
 
-## ⚠️ The Problem
+## What it does
 
-Most AI tools:
+OfflineScholar is built for one core goal:
 
-* ❌ hallucinate sources
-* ❌ generate fake citations
-* ❌ cannot be trusted for academic writing
+> help you read, reason over, and write from your own PDF sources without inventing information.
 
----
+It is designed for academic workflows where trust matters more than fluency.
 
-## ✅ The Solution
+### Core capabilities
 
-OfflineScholar:
-
-* ✔ Uses **only your uploaded PDFs**
-* ✔ Shows **traceable citations (document + page)**
-* ✔ Returns **"No information found"** if the answer is not in your sources
-
-👉 No guessing. No fake knowledge.
-
----
-
-## 🔥 Core Features
-
-### 📄 1. Upload & Ask
-
-* Upload academic PDFs
-* Ask any question
-* Get **grounded answers with citations**
+- Upload PDF documents into a local workspace
+- Process documents into searchable chunks
+- Ask grounded questions over selected PDFs
+- Generate:
+  - Q&A answers
+  - Summaries
+  - Argument-builder outputs
+  - Literature review outputs
+- Return citations tied to retrieved source segments
+- Fall back to **“Bilgi bulunamadı”** when the requested information is not supported by the retrieved evidence
+- Export generated outputs to `.docx`
+- Run locally with Ollama-based generation models
 
 ---
 
-### ✍️ 2. Thesis Mode
+## Why this project exists
 
-Generate **academic paragraphs** based strictly on your sources.
+Most AI writing tools are optimized for speed and smooth text generation.
 
-> Example:
+Academic work needs something else:
 
-**Prompt:**
+- traceable evidence
+- source-bounded answers
+- explicit failure when evidence is missing
+- local control over documents and models
 
-> Explain the impact of X based on the provided papers.
-
-**Output:**
-
-> X has been shown to significantly affect Y in multiple studies (Smith, 2020, p.12; Johnson, 2019, p.45). These findings suggest that...
-
----
-
-### 🧠 3. No Hallucination Guarantee
-
-If the answer is not found in your PDFs:
-
-> ❗ "No information found."
+OfflineScholar is built around those constraints.
 
 ---
 
-### 🔌 4. Fully Local (Optional)
+## Architecture
 
-* Works without internet
-* Your documents stay on your machine
+This repository is split into three parts:
 
----
+### 1. `backend/`
+Local FastAPI backend that handles:
 
-## 🎯 Who is this for?
+- PDF upload
+- document ingestion
+- OCR/text extraction
+- chunking
+- embeddings
+- hybrid retrieval
+- reranking
+- grounded generation
+- citation persistence
+- DOCX export
+- job tracking
 
-* University students
-* Master's / PhD researchers
-* Anyone writing academic content from PDFs
+### 2. `frontend/`
+React + Vite user interface for:
 
----
+- managing documents
+- selecting active PDFs
+- submitting academic tasks
+- viewing outputs
+- inspecting citations/evidence
+- exporting results
 
-## ⚡ Why is this different?
-
-| Tool               | Uses your sources only | Real citations | Offline |
-| ------------------ | ---------------------- | -------------- | ------- |
-| ChatGPT            | ❌                      | ❌              | ❌       |
-| Google Scholar     | ✔                      | ✔              | ❌       |
-| **OfflineScholar** | ✔                      | ✔              | ✔       |
-
----
-
-## 🛠️ Tech Stack
-
-* FastAPI (backend)
-* React (frontend)
-* Tauri (desktop)
-* Local LLM + RAG pipeline
-
----
-
-## 🧪 Current Status
-
-🚧 Early version — core functionality works:
-
-* PDF upload ✔
-* Q&A with citations ✔
-* Thesis paragraph generation ✔
-
-More features coming soon.
+### 3. `desktop/`
+Tauri desktop shell that wraps the local app into a desktop experience.
 
 ---
 
-## 💡 Vision
+## Tech stack
 
-> A trustworthy AI system for academic work —
-> where every sentence is backed by real sources.
+### Backend
+- FastAPI
+- SQLite
+- pdfplumber
+- pytesseract
+- langchain-text-splitters
+- sentence-transformers
+- faiss-cpu
+- rank-bm25
+- python-docx
+- httpx
+
+### Frontend
+- React
+- Vite
+- TypeScript
+- Zustand
+- lucide-react
+
+### Desktop
+- Tauri
+
+### Local AI / Retrieval
+- Ollama
+- `BAAI/bge-m3` for embeddings
+- `cross-encoder/ms-marco-MiniLM-L-6-v2` for reranking
+- `llama3.1:8b` for classification / generation / formatting by default
 
 ---
 
-## 📦 Installation
+## Retrieval and generation flow
 
+The core pipeline is:
+
+1. User uploads a PDF
+2. The backend extracts text (and OCR when needed)
+3. The document is cleaned and chunked
+4. Chunks are embedded and indexed locally
+5. Query is matched using hybrid retrieval:
+   - BM25
+   - vector similarity
+   - reranking
+6. Only retrieved evidence is sent to the local generator
+7. Output is stored with citations
+8. If sufficient support is not found, the system falls back instead of pretending certainty
+
+---
+
+## Supported generation modes
+
+The backend currently supports these modes:
+
+- `qa`
+- `summarization`
+- `argument_builder`
+- `literature_review`
+
+That means the app is not limited to simple question answering. It already has the right shape for source-grounded academic writing workflows.
+
+---
+
+## Local-first design
+
+OfflineScholar is designed to keep the academic workflow on-device as much as possible.
+
+### Local storage includes:
+- uploaded PDFs
+- generated indexes
+- SQLite metadata
+- exported DOCX files
+
+### Default local data directory
 ```bash
-# backend
-cd backend
-pip install -r requirements.txt
-
-# frontend
-cd frontend
-npm install
-
-# run
-npm run dev
-```
-
----
-
-## ⭐ Support
-
-If you find this useful, give it a star.
-
----
-
-## 🧠 Built for real academic work
-
-Not for generating text.
-
-For generating **trust**.
+./data
