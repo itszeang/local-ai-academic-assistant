@@ -118,16 +118,6 @@ More features coming soon.
 
 ---
 
-## 📸 Demo (add here)
-
-> Add screenshots / GIF showing:
->
-> * PDF upload
-> * Question → cited answer
-> * Thesis paragraph output
-
----
-
 ## 💡 Vision
 
 > A trustworthy AI system for academic work —
